@@ -6,11 +6,11 @@ pub fn render(stdout: &mut Stdout, last_frame: &Frame, current_frame: &Frame, fo
     // Check is force render?
     if force {
         // Set background color to blue
-        stdout.queue(SetBackgroundColor(Color::Red)).unwrap();
+        stdout.queue(SetBackgroundColor(Color::DarkBlue)).unwrap();
         // Clear all stdout
         stdout.queue(Clear(ClearType::All)).unwrap();
         // Then reset background color to black
-        stdout.queue(SetBackgroundColor(Color::Black)).unwrap();
+        stdout.queue(SetBackgroundColor(Color::White)).unwrap();
     }
 
     for (x, coll) in current_frame.iter().enumerate() {

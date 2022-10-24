@@ -1,6 +1,6 @@
 use std::{error::Error, io, time::Duration, sync::mpsc, thread};
 use crossterm::{terminal::{self, EnterAlternateScreen, LeaveAlternateScreen}, cursor::{Show, Hide}, ExecutableCommand, event::{self, Event, KeyCode}};
-use invaders_rs::{frame::{self, new_frame}, render};
+use invaders_rs::{frame::{self, new_frame, Drawable}, render, player::{Player}};
 use rusty_audio::Audio;
 
 fn main() -> Result <(), Box<dyn Error>>{
@@ -40,25 +40,33 @@ fn main() -> Result <(), Box<dyn Error>>{
         }
     });
 
+     // Initialize Player
+     let mut player = Player::new();
     // Game Loop
     'gameloop: loop {
         // Per-frame initialization
-        let current_frame = new_frame();
+        let mut current_frame = new_frame();
 
         // Input
         while event::poll(Duration::default())? {
             if let Event::Key(key_event) = event::read()? {
                 match key_event.code {
+                    KeyCode::Left => player.move_left(),
+                    KeyCode::Right => player.move_right(),
+                    // KeyCode::Up => player.move_up(),
+                    // KeyCode::Down => player.move_down(),
                     KeyCode::Esc | KeyCode::Char('q') => {
                         audio.play("lose");
                         break 'gameloop;
-                    }
+                    },
                     _ => {}
                 }
             }
         }
 
         // Draw and render Section
+        // Render the player
+        player.draw(&mut current_frame);
         // Ignore the error by naming the rendering tranciver '_'
         // Because it's expected that the gameloop will start before the mpsc channel is ready
         // to recieving any input. Maybe we can improve it? IDK man
