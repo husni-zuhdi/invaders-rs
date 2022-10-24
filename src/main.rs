@@ -1,6 +1,6 @@
 use std::{error::Error, io, time::{Duration, Instant}, sync::mpsc, thread};
 use crossterm::{terminal::{self, EnterAlternateScreen, LeaveAlternateScreen}, cursor::{Show, Hide}, ExecutableCommand, event::{self, Event, KeyCode}};
-use invaders_rs::{frame::{self, new_frame, Drawable}, render, player::{Player}};
+use invaders_rs::{frame::{self, new_frame, Drawable}, render, player::{Player}, invaders::Invaders};
 use rusty_audio::Audio;
 
 fn main() -> Result <(), Box<dyn Error>>{
@@ -44,6 +44,8 @@ fn main() -> Result <(), Box<dyn Error>>{
     let mut player = Player::new();
     //// Initialize instant to track time
     let mut instant = Instant::now();
+    //// Initialize invaders
+    let mut invaders = Invaders::new();
     // Game Loop
     'gameloop: loop {
         // Per-frame initialization
@@ -77,12 +79,28 @@ fn main() -> Result <(), Box<dyn Error>>{
         }
 
         // Updates
+        //// Update player
         player.update(delta);
+        //// Update Invaders
+        if invaders.update(delta) {
+            audio.play("move");
+        }
+        //// Update Detect Hit
+        if player.detect_hits(&mut invaders) {
+            audio.play("explode");
+        }
 
 
         // Draw and render Section
-        // Render the player
-        player.draw(&mut current_frame);
+        // // Render the player
+        // player.draw(&mut current_frame);
+        // // Render the invaders
+        // invaders.draw(&mut current_frame);
+        // Rendering with implementing Generics
+        let drawables: Vec<&dyn Drawable> = vec![&player, &invaders];
+        for drawable in drawables {
+            drawable.draw(&mut current_frame);
+        }
         // Ignore the error by naming the rendering tranciver '_'
         // Because it's expected that the gameloop will start before the mpsc channel is ready
         // to recieving any input. Maybe we can improve it? IDK man
@@ -90,6 +108,16 @@ fn main() -> Result <(), Box<dyn Error>>{
         // Sleep to wait for the render loop ready
         // Configure the sleep time. Each computer is different (IDK why ???)
         thread::sleep(Duration::from_millis(20));
+
+        // Win of Lose
+        if invaders.all_killed() {
+            audio.play("win");
+            break 'gameloop;
+        }
+        if invaders.reached_bottom() {
+            audio.play("lose");
+            break 'gameloop;
+        }
     }
 
     // Cleanup
