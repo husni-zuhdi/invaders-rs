@@ -1,6 +1,7 @@
 pub mod frame;
 pub mod render;
 pub mod player;
+pub mod shot;
 
 // Constant
 pub const NUM_ROWS: usize = 20;
